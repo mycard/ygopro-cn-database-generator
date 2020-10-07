@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"outDir": "build",
+		"module": "commonjs",
+		"target": "esnext",
+		"esModuleInterop": true,
+		"sourceMap": true
+	},
+	"compileOnSave": true,
+	"allowJs": true,
+	"include": [
+		"*.ts",
+		"src/*.ts",
+		"test/*.ts"
+	]
+}
