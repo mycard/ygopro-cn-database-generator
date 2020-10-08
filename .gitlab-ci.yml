@@ -50,6 +50,6 @@ deploy_to_ygopro_server:
     - ssh-keyscan koishi.momobako.com >> ~/.ssh/known_hosts
     - echo $NANAHIRA_SSH_KEY | base64 --decode > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/*
-    - rsync -4cavzP output/ nanahira@koishi.momobako.com:~/ygopro-cn/expansions
+    - rsync -4cavzP --delete --exclude=cn-data.tar.gz --exclude=deck output/ nanahira@koishi.momobako.com:~/ygopro-cn/expansions
   only:
     - master
