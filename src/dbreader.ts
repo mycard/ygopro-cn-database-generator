@@ -70,21 +70,32 @@ export class DBReader extends Base {
 			await this.outputdb.run(sql);
 		}
 	}
-	async getCodeFromJapaneseName(name: string): Promise<number[]> {
+	async getCodeFromJapaneseName(name: string): Promise<number> {
 		this.log.debug(`Reading JP database for code of name ${name}.`);
 		const output = await this.jpdb.get('SELECT id FROM texts WHERE name = ?', name);
 		if (!output) {
 			this.log.debug(`Code of ${name} not found.`);
-			return [];
+			return 0;
 		}
 		const code: number = output.id;
+		return code;
+	}
+	async getExtendedCodeFromJapaneseName(name: string): Promise<number[]> {
+		const code: number = await this.getCodeFromJapaneseName(name);
+		if (!code) {
+			return [];
+		}
 		this.log.debug(`Reading CN database for more codes of id ${code}.`);
 		const moreCodes: number[] = (await this.cndb.all('SELECT id FROM datas WHERE id >= ? AND id <= ?', [code, code + 10])).map(m => m.id);
 		this.log.debug(`${name} => ${moreCodes.join(",")}`);
 		return moreCodes;
 	}
+	async getAllPureCodesFromJapaneseNames(names: string[]): Promise<number[]> {
+		const codes = await Promise.all(names.map(s => this.getCodeFromJapaneseName(s)));
+		return _.uniq(codes);
+	}
 	async getAllCodesFromJapaneseNames(names: string[]): Promise<number[]> {
-		const codes = _.flatten(await Promise.all(names.map(s => this.getCodeFromJapaneseName(s))), true);
+		const codes = _.flatten(await Promise.all(names.map(s => this.getExtendedCodeFromJapaneseName(s))), true);
 		return _.uniq(codes);
 	}
 	private getDatasArray(datas: any): any[] {
