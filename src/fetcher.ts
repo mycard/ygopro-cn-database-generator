@@ -4,6 +4,15 @@ import axios from "axios";
 import _ from "underscore";
 import Base from "./base";
 
+
+function convertCharToFullSize(char: string) {
+	const charCode = char.charCodeAt(0);
+	if (charCode !== 32 && charCode < 127) {
+		return String.fromCharCode(charCode + 65248);
+	} 
+	return char;
+}
+
 export class CNFetcher extends Base {
 	private async fetchPage(url: string): Promise<string> {
 		this.log.debug(`Downloading content from ${url} .`);
@@ -20,9 +29,9 @@ export class CNFetcher extends Base {
 			return [];
 		}
 		const allCardNames = allStrings.map(m => m.match(/<font color="Silver">\u203b(.*)<\/font><br \/>/)[1]);
-		const uniueCardNames = _.uniq(allCardNames);
-		this.log.debug(`${uniueCardNames.length} cards found from ${url} .`);
-		return uniueCardNames;
+		const uniqueCardNames = _.uniq(allCardNames).map(m => Array.from(m).map(convertCharToFullSize).join(""));
+		this.log.debug(`${uniqueCardNames.length} cards found from ${url} .`);
+		return uniqueCardNames;
 	}
 	async fetchPosts(): Promise<string[]> {
 		let posts: string[] = [];
