@@ -3,7 +3,8 @@ import sqlite3 from "sqlite3";
 import _ from "underscore";
 import Base from "./base";
 import { promises as fs } from "fs";
-import SQL from "sql-template-strings";
+import { generateBanlistFromCode } from "./utility";
+import { Cards, DeckGenerator } from "./deck";
 
 const textsFields = ["id", "name", "desc"]
 for (let i = 1; i <= 16; ++i) {
@@ -47,16 +48,17 @@ export class DBReader extends Base {
 		}
 	}
 	private async openOutputDatabase() {
-		const fullPath = `${this.config.outputPath}/cards.cdb`;
+		const fullPath = `${this.config.outputPath}/cn.cdb`;
+		const createDirectoryPath = `${this.config.outputPath}/deck/cn`;
 		try {
-			await fs.access(this.config.outputPath);
+			await fs.access(createDirectoryPath);
 		} catch (e) {
-			this.log.debug(`Creating directory ${this.config.outputPath} ...`);
-			await fs.mkdir(this.config.outputPath, { recursive: true });
+			this.log.debug(`Creating directory ${createDirectoryPath} ...`);
+			await fs.mkdir(createDirectoryPath, { recursive: true });
 		}
 		try {
 			await fs.unlink(fullPath);
-		} catch(e) { }
+		} catch (e) { }
 		this.log.debug(`Creating database ${fullPath} ...`);
 		this.outputdb = await this.openDatabase(fullPath);
 		const initSQLs = [
@@ -127,8 +129,54 @@ export class DBReader extends Base {
 		const queries = _.flatten(await Promise.all(codes.map(s => this.getQueriesFromCode(s))), true);
 		return queries;
 	}
+	async getOtherCardCodes(cnCodes: number[]) {
+		const sql = `SELECT id FROM datas WHERE 1 AND ${cnCodes.map(m => "id != ?").join(" AND ")}`;
+		const otherCodes: number[] = (await this.cndb.all(sql, cnCodes)).map(m => m.id);
+		return otherCodes;
+	}
+	async generateBanlist(codes: number[]) {
+		const otherCodes = await this.getOtherCardCodes(codes);
+		const banlistString = await generateBanlistFromCode([
+			{
+				name: "cn",
+				list: [
+					otherCodes
+				]
+			}
+		]);
+		await fs.writeFile(`${this.config.outputPath}/lflist.conf`, banlistString);
+	}
+	private async checkExtraDeckCards(code: number) {
+		const sql = `select id from datas where type & (0x4000000 | 0x800000 | 0x2000 | 0x40) > 0 AND id = ?`;
+		const result = (await this.cndb.all(sql, [code]));
+		return result.length > 0;
+	}
+	private async checkMainDeckCards(code: number) {
+		const sql = `select id from datas where type & (0x4000000 | 0x800000 | 0x4000 | 0x2000 | 0x40) == 0 AND id = ?`;
+		const result = (await this.cndb.all(sql, [code]));
+		return result.length > 0;
+	}
+	private async categorizeCards(codes: number[]): Promise<Cards> {
+		const [mainResults, extraResults] = await Promise.all([
+			Promise.all(codes.map(code => this.checkMainDeckCards(code))),
+			Promise.all(codes.map(code => this.checkExtraDeckCards(code)))
+		]);
+		return {
+			main: codes.filter((code, index) => mainResults[index]),
+			extra: codes.filter((code, index) => extraResults[index])
+		}
+	}
+	private async generateDecks(codes: number[]) {
+		const cards = await this.categorizeCards(codes);
+		const deckGenerator = new DeckGenerator(cards);
+		const deckTexts = deckGenerator.getDeckTexts();
+		await Promise.all(_.range(deckTexts.length).map(i => fs.writeFile(`${this.config.outputPath}/deck/cn/cn_${i}.ydk`, deckTexts[i])));
+	}
 	async run(strings: string[]) {
-		const codes = await this.getAllCodesFromJapaneseNames(strings);
+		const [codes, pureCodes] = await Promise.all([
+			this.getAllCodesFromJapaneseNames(strings),
+			this.getAllPureCodesFromJapaneseNames(strings)
+		]);
 		const queries = await this.getAllQueries(codes);
 		await this.openOutputDatabase();
 		await this.outputdb.run("BEGIN TRANSACTION;");
@@ -138,5 +186,9 @@ export class DBReader extends Base {
 		}
 		await this.outputdb.run("COMMIT;");
 		this.log.debug(`Database created.`);
+		await this.generateBanlist(codes);
+		this.log.debug(`LFList created.`);
+		await this.generateDecks(pureCodes);
+		this.log.debug(`Decks generated.`);
 	}
 }

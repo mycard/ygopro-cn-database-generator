@@ -12,11 +12,14 @@ generate:
     - linux
   image: node
   script:
-    - apt update ; apt -y install build-essential python3 sqlite3 git
+    - apt update ; apt -y install build-essential python3 sqlite3 git tar
     - git clone --depth=1 https://code.mycard.moe/mycard/ygopro-database
     - npm ci
     - npm run build
     - npm start
+    - cd output
+    - tar zcvf cn-data.tar.gz deck cn.cdb lflist.conf
+    - cd ..
   artifacts:
     paths:
       - output
@@ -47,6 +50,6 @@ deploy_to_ygopro_server:
     - ssh-keyscan koishi.momobako.com >> ~/.ssh/known_hosts
     - echo $NANAHIRA_SSH_KEY | base64 --decode > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/*
-    - scp -r output/cards.cdb nanahira@koishi.momobako.com:~/ygopro-cn/cards.cdb
+    - scp -r output/cn.cdb nanahira@koishi.momobako.com:~/ygopro-cn/cards.cdb
   only:
     - master

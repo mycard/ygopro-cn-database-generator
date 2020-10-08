@@ -9,6 +9,7 @@ async function main() {
 	await dbreader.init();
 	const strings = await fetcher.fetch();
 	await dbreader.run(strings);
+	await dbreader.finalize();
 	process.exit();
 }
 main();

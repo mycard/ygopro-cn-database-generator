@@ -1,0 +1,21 @@
+#{% for banlist in banlists %}[{{banlist.name}}]{% endfor %}
+
+{% for banlist in banlists %}
+!{{banlist.name}}
+
+#forbidden
+{% for code in banlist.list[0] %}
+{{code}} 0
+{%- endfor %}
+
+#limit
+{% for code in banlist.list[1] %}
+{{code}} 1
+{%- endfor %}
+
+#semi limit
+{% for code in banlist.list[2] %}
+{{code}} 2
+{%- endfor %}
+
+{% endfor %}

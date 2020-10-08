@@ -24,6 +24,7 @@
     "@types/underscore": "^1.10.24",
     "axios": "^0.20.0",
     "bunyan": "^1.8.14",
+    "jinja-js": "^0.1.8",
     "sqlite": "^4.0.15",
     "sqlite3": "^5.0.0",
     "typescript": "^4.0.3",
