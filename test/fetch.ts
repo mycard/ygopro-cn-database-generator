@@ -8,9 +8,7 @@ async function main() {
 	const dbreader = new DBReader({ name: "Test database", level: "debug" });
 	await dbreader.init();
 	const strings = await fetcher.fetch();
-	console.log(strings);
-	const codes = _.flatten(await Promise.all(strings.map(s => dbreader.getCodeFromJapaneseName(s))), true);
-	console.log(codes);
+	await dbreader.run(strings);
 	process.exit();
 }
 main();

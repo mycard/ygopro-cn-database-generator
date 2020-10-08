@@ -15,4 +15,7 @@ export default abstract class Base {
 		this.log.debug("Reading config...");
 		await this.loadConfig();
 	}
+	async finalize() {
+		// for override
+	}
 }
