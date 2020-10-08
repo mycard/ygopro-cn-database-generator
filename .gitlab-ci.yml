@@ -1,43 +1,35 @@
 stages:
-  - build
+  - generate
   - deploy
 
 variables:
   GIT_DEPTH: "1"
-  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  POST_DEPTH: 10
 
-before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
-build:
-  stage: build
+generate:
+  stage: generate
   tags: 
-    - docker
+    - linux
+  image: node
   script:
-    - docker build --pull -t $CONTAINER_TEST_IMAGE .
-    - docker push $CONTAINER_TEST_IMAGE
+    - apt update ; apt -y install build-essential python3 sqlite3 git
+    - git clone --depth=1 https://code.mycard.moe/mycard/ygopro-database
+    - npm ci
+    - npm run build
+    - npm start
+  artifacts:
+    paths:
+      - output
 
-deploy_latest:
+upload_to_minio:
   stage: deploy
+  dependencies:
+    - generate
   tags: 
-    - docker
+    - linux
+  image: python
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
-    - docker push $CONTAINER_RELEASE_IMAGE
+    - pip install -U awscli
+    - aws s3 --endpoint=https://minio.mycard.moe:9000 sync --delete output/ s3://mycard/cn-database
   only:
     - master
-
-deploy_tag:
-  stage: deploy
-  tags: 
-    - docker
-  variables:
-    CONTAINER_TAG_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
-  script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_TAG_IMAGE
-    - docker push $CONTAINER_TAG_IMAGE
-  only:
-    - tags
