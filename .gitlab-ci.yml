@@ -36,7 +36,8 @@ upload_to_minio:
 
 deploy_to_ygopro_server:
   stage: deploy
-  dependencies: []
+  dependencies:
+    - generate
   tags:
     - linux
   script:
