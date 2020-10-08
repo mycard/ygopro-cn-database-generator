@@ -1,22 +1,10 @@
 
 
 import axios from "axios";
-import { Config, loadConfig } from "./config";
-import bunyan from "bunyan";
 import _ from "underscore";
+import Base from "./base";
 
-export class CNFetcher {
-	config: Config;
-	log: bunyan;
-	constructor(loggerOptions: bunyan.LoggerOptions) {
-		this.log = bunyan.createLogger(loggerOptions);
-	}
-	async init() {
-		this.log.debug("Initializing...");
-		this.log.debug("Reading config...");
-		this.config = await loadConfig();
-		this.log.debug("Initialized.");
-	}
+export class CNFetcher extends Base {
 	private async fetchPage(url: string): Promise<string> {
 		this.log.debug(`Downloading content from ${url} .`);
 		const { data } = await axios.get(url, {

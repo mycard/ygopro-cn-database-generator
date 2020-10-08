@@ -1,4 +1,4 @@
 postDepth: 5
 jpDatabasePath: ./ygopro-database/locales/ja-JP/cards.cdb
 cnDatabasePath: ./ygopro-database/locales/zh-CN/cards.cdb
-outputPath: ./output/cn.cdb
+outputPath: ./output
