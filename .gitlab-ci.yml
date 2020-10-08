@@ -33,3 +33,19 @@ upload_to_minio:
     - aws s3 --endpoint=https://minio.mycard.moe:9000 sync --delete output/ s3://mycard/cn-database
   only:
     - master
+
+deploy_to_ygopro_server:
+  stage: deploy
+  dependencies: []
+  tags:
+    - linux
+  script:
+    - apt update && apt -y install openssh-client rsync coreutils
+    - mkdir ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan koishi.momobako.com >> ~/.ssh/known_hosts
+    - echo $NANAHIRA_SSH_KEY | base64 --decode > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/*
+    - scp -r output/cards.cdb nanahira@koishi.momobako.com:~/ygopro-cn/cards.cdb
+  only:
+    - master
