@@ -48,14 +48,19 @@ export class DBReader extends Base {
 		}
 	}
 	private async openOutputDatabase() {
-		const fullPath = `${this.config.outputPath}/cn.cdb`;
-		const createDirectoryPath = `${this.config.outputPath}/deck/cn`;
-		try {
-			await fs.access(createDirectoryPath);
-		} catch (e) {
-			this.log.debug(`Creating directory ${createDirectoryPath} ...`);
-			await fs.mkdir(createDirectoryPath, { recursive: true });
-		}
+		const fullPath = `${this.config.outputPath}/expansions/cn.cdb`;
+		const createDirectoryPaths = [
+      `${this.config.outputPath}/deck/cn`,
+      `${this.config.outputPath}/expansions`
+    ];
+    for (let createDirectoryPath of createDirectoryPaths) {
+      try {
+        await fs.access(createDirectoryPath);
+      } catch (e) {
+        this.log.debug(`Creating directory ${createDirectoryPath} ...`);
+        await fs.mkdir(createDirectoryPath, { recursive: true });
+      }
+    }
 		try {
 			await fs.unlink(fullPath);
 		} catch (e) { }
@@ -145,7 +150,7 @@ export class DBReader extends Base {
 				]
 			}
 		]);
-		await fs.writeFile(`${this.config.outputPath}/lflist.conf`, banlistString);
+		await fs.writeFile(`${this.config.outputPath}/expansions/lflist.conf`, banlistString);
 	}
 	private async checkExtraDeckCards(code: number) {
 		const sql = `select id from datas where type & (0x4000000 | 0x800000 | 0x2000 | 0x40) > 0 AND id = ?`;
