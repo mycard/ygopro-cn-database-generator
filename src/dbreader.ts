@@ -118,6 +118,7 @@ export class DBReader extends Base {
 		this.log.debug(`Reading card ${code}.`);
 		const datas = await this.cndb.get("select * from datas where id = ?", [code]);
 		const texts = await this.cndb.get("select * from texts where id = ?", [code]);
+    texts.desc += '\r\n\r\n\u2605简体中文卡';
 		const datasArray = this.getDatasArray(datas);
 		const textsArray = this.getTextsArray(texts);
 		return [
