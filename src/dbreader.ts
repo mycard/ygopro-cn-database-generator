@@ -50,17 +50,17 @@ export class DBReader extends Base {
 	private async openOutputDatabase() {
 		const fullPath = `${this.config.outputPath}/expansions/cn.cdb`;
 		const createDirectoryPaths = [
-      `${this.config.outputPath}/deck/cn`,
-      `${this.config.outputPath}/expansions`
-    ];
-    for (let createDirectoryPath of createDirectoryPaths) {
-      try {
-        await fs.access(createDirectoryPath);
-      } catch (e) {
-        this.log.debug(`Creating directory ${createDirectoryPath} ...`);
-        await fs.mkdir(createDirectoryPath, { recursive: true });
-      }
-    }
+			`${this.config.outputPath}/deck/cn`,
+			`${this.config.outputPath}/expansions`
+		];
+		for (let createDirectoryPath of createDirectoryPaths) {
+			try {
+				await fs.access(createDirectoryPath);
+			} catch (e) {
+				this.log.debug(`Creating directory ${createDirectoryPath} ...`);
+				await fs.mkdir(createDirectoryPath, { recursive: true });
+			}
+		}
 		try {
 			await fs.unlink(fullPath);
 		} catch (e) { }
@@ -123,7 +123,7 @@ export class DBReader extends Base {
 		this.log.debug(`Reading card ${code}.`);
 		const datas = await this.cndb.get("select * from datas where id = ?", [code]);
 		const texts = await this.cndb.get("select * from texts where id = ?", [code]);
-    texts.desc += '\r\n\r\n\u2605简体中文卡';
+		texts.desc += '\r\n\r\n\u2605简体中文卡';
 		const datasArray = this.getDatasArray(datas);
 		const textsArray = this.getTextsArray(texts);
 		return [
